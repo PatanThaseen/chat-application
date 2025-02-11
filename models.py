@@ -9,6 +9,7 @@ class User(UserMixin, db.Model):
     email = db.Column(db.String(120), unique=True, nullable=False)
     password_hash = db.Column(db.String(256))
     last_seen = db.Column(db.DateTime, default=datetime.utcnow)
+    is_typing = db.Column(db.DateTime)
     messages = db.relationship('Message', backref='author', lazy='dynamic')
 
     def set_password(self, password):
@@ -19,6 +20,8 @@ class User(UserMixin, db.Model):
 
 class Message(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    content = db.Column(db.String(500), nullable=False)
+    content = db.Column(db.Text, nullable=False)
     timestamp = db.Column(db.DateTime, default=datetime.utcnow)
+    edited_at = db.Column(db.DateTime)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    is_formatted = db.Column(db.Boolean, default=False)

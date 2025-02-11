@@ -102,14 +102,63 @@ def logout():
 def chat():
     return render_template('chat.html', username=current_user.username)
 
+@app.route('/api/typing', methods=['GET', 'POST'])
+@login_required
+def handle_typing():
+    if request.method == 'POST':
+        current_user.is_typing = datetime.utcnow()
+        db.session.commit()
+        return jsonify({'status': 'success'})
+
+    # Get users who were typing in the last 5 seconds
+    typing_threshold = datetime.utcnow() - timedelta(seconds=5)
+    typing_users = User.query.filter(
+        User.is_typing > typing_threshold,
+        User.id != current_user.id
+    ).all()
+
+    return jsonify({
+        'typing': [user.username for user in typing_users]
+    })
+
+@app.route('/api/messages/<int:message_id>', methods=['PUT', 'DELETE'])
+@login_required
+def handle_message(message_id):
+    message = Message.query.get_or_404(message_id)
+
+    # Ensure user owns the message
+    if message.user_id != current_user.id:
+        return jsonify({'error': 'Unauthorized'}), 403
+
+    if request.method == 'DELETE':
+        db.session.delete(message)
+        db.session.commit()
+        return jsonify({'status': 'success'})
+
+    # Handle PUT (edit)
+    content = request.json.get('content', '').strip()
+    if not content:
+        return jsonify({'error': 'Empty message'}), 400
+
+    message.content = content
+    message.edited_at = datetime.utcnow()
+    db.session.commit()
+    return jsonify({'status': 'success'})
+
 @app.route('/api/messages', methods=['GET', 'POST'])
 @login_required
 def handle_messages():
     if request.method == 'POST':
         content = request.json.get('message', '').strip()
+        is_formatted = request.json.get('formatted', False)
+
         if content:
             try:
-                message = Message(content=content, user_id=current_user.id)
+                message = Message(
+                    content=content,
+                    user_id=current_user.id,
+                    is_formatted=is_formatted
+                )
                 db.session.add(message)
                 current_user.last_seen = datetime.utcnow()
                 db.session.commit()
@@ -134,9 +183,12 @@ def handle_messages():
 
         return jsonify({
             'messages': [{
+                'id': msg.id,
                 'username': msg.author.username,
                 'content': msg.content,
-                'timestamp': msg.timestamp.strftime('%H:%M:%S')
+                'timestamp': msg.timestamp.strftime('%H:%M:%S'),
+                'edited': msg.edited_at is not None,
+                'formatted': msg.is_formatted
             } for msg in reversed(messages)],
             'active_users': [user.username for user in active_users]
         })

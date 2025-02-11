@@ -8,6 +8,7 @@
     padding: 0.5rem 1rem;
     border-radius: 0.5rem;
     max-width: 80%;
+    word-break: break-word;
 }
 
 .message.own {
@@ -30,6 +31,17 @@
     opacity: 0.7;
 }
 
+.message .content {
+    margin-top: 0.25rem;
+}
+
+.message .content img.emoji {
+    height: 1.2em;
+    width: 1.2em;
+    margin: 0 .05em 0 .1em;
+    vertical-align: -0.1em;
+}
+
 .active-user {
     padding: 0.25rem 0;
 }
@@ -37,4 +49,54 @@
 .active-user i {
     color: #28a745;
     margin-right: 0.5rem;
+}
+
+#messageEditor {
+    min-height: 100px;
+    max-height: 200px;
+    overflow-y: auto;
+}
+
+.editor-toolbar {
+    gap: 0.5rem;
+    display: flex;
+}
+
+.editor-toolbar button {
+    padding: 0.25rem 0.5rem;
+}
+
+.typing-indicator {
+    font-style: italic;
+}
+
+/* Emoji picker customization */
+.emoji-mart {
+    font-size: 14px;
+}
+
+.emoji-mart-emoji {
+    cursor: pointer;
+}
+
+.message .actions {
+    display: none;
+    float: right;
+}
+
+.message:hover .actions {
+    display: block;
+}
+
+.message .actions button {
+    background: none;
+    border: none;
+    color: inherit;
+    opacity: 0.7;
+    cursor: pointer;
+    padding: 0 0.25rem;
+}
+
+.message .actions button:hover {
+    opacity: 1;
 }

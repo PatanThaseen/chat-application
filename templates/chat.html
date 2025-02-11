@@ -21,12 +21,33 @@
                     <i class="fa fa-spinner fa-spin"></i> Loading messages...
                 </div>
             </div>
+            <div class="typing-indicator ms-3 mb-2 text-muted" id="typingIndicator" style="display: none;">
+                Someone is typing...
+            </div>
             <div class="p-3 border-top">
-                <form id="messageForm" class="d-flex">
-                    <input type="text" class="form-control me-2" id="messageInput" placeholder="Type your message...">
-                    <button type="submit" class="btn btn-primary">
-                        <i class="fa fa-paper-plane"></i>
-                    </button>
+                <form id="messageForm" class="d-flex flex-column">
+                    <div class="mb-2">
+                        <div id="messageEditor" class="form-control" contenteditable="true"></div>
+                        <div class="editor-toolbar mt-2">
+                            <button type="button" class="btn btn-sm btn-outline-secondary" onclick="formatText('bold')">
+                                <i class="fa fa-bold"></i>
+                            </button>
+                            <button type="button" class="btn btn-sm btn-outline-secondary" onclick="formatText('italic')">
+                                <i class="fa fa-italic"></i>
+                            </button>
+                            <button type="button" class="btn btn-sm btn-outline-secondary" onclick="formatText('underline')">
+                                <i class="fa fa-underline"></i>
+                            </button>
+                            <button type="button" class="btn btn-sm btn-outline-secondary" id="emojiButton">
+                                <i class="fa fa-smile-o"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="d-flex">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fa fa-paper-plane"></i> Send
+                        </button>
+                    </div>
                 </form>
             </div>
         </div>
@@ -42,8 +63,26 @@
         </div>
     </div>
 </div>
+
+<!-- Emoji Picker Modal -->
+<div class="modal fade" id="emojiModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Select Emoji</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="emojiContainer">
+                <!-- Emojis will be populated here -->
+            </div>
+        </div>
+    </div>
+</div>
 {% endblock %}
 
 {% block scripts %}
+<!-- Include Emoji Mart -->
+<script src="https://cdn.jsdelivr.net/npm/emoji-mart@latest/dist/browser.js"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/emoji-mart@latest/css/emoji-mart.css">
 <script src="{{ url_for('static', filename='js/chat.js') }}"></script>
 {% endblock %}

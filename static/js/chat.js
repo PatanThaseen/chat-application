@@ -8,17 +8,34 @@ document.addEventListener('DOMContentLoaded', function() {
 
     let lastTypingSignal = 0;
 
-    // Initialize emoji picker
+    // Initialize emoji picker with customized styles
     const picker = document.createElement('emoji-picker');
+    picker.style.display = 'none';
+    picker.style.position = 'fixed';
+    picker.style.zIndex = '1000';
+    picker.style.boxShadow = '0 2px 8px rgba(0, 0, 0, 0.15)';
+    picker.style.border = 'none';
+    picker.style.borderRadius = '12px';
     document.body.appendChild(picker);
 
-    document.querySelector('.emoji-button').addEventListener('click', () => {
+    document.querySelector('.emoji-button').addEventListener('click', (e) => {
+        e.preventDefault(); // Prevent form submission
+        const buttonRect = e.target.closest('.emoji-button').getBoundingClientRect();
         picker.style.display = picker.style.display === 'none' ? 'block' : 'none';
-        picker.style.position = 'fixed';
-        picker.style.zIndex = '1000';
-        const buttonRect = document.querySelector('.emoji-button').getBoundingClientRect();
-        picker.style.top = `${buttonRect.bottom + 5}px`;
-        picker.style.left = `${buttonRect.left}px`;
+
+        // Position the picker relative to the viewport
+        const viewportHeight = window.innerHeight;
+        const spaceBelow = viewportHeight - buttonRect.bottom;
+
+        if (spaceBelow < 400) { // If not enough space below
+            picker.style.bottom = '10px';
+            picker.style.top = 'auto';
+        } else {
+            picker.style.top = `${buttonRect.bottom + 5}px`;
+            picker.style.bottom = 'auto';
+        }
+
+        picker.style.left = `${Math.min(buttonRect.left, window.innerWidth - 320)}px`; // 320px is approximate picker width
     });
 
     // Hide picker when clicking outside
@@ -29,16 +46,29 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     picker.addEventListener('emoji-click', event => {
-        insertTextAtCursor(event.detail.unicode);
+        const emoji = event.detail.unicode;
+        insertAtCursor(emoji);
         picker.style.display = 'none';
     });
 
-    function insertTextAtCursor(text) {
+    function insertAtCursor(text) {
+        if (!messageEditor) return;
+
         const selection = window.getSelection();
         const range = selection.getRangeAt(0);
-        const node = document.createTextNode(text);
-        range.insertNode(node);
-        range.collapse(false);
+
+        // Create a text node with the emoji
+        const emojiNode = document.createTextNode(text);
+
+        // Insert the emoji and move cursor after it
+        range.insertNode(emojiNode);
+        range.setStartAfter(emojiNode);
+        range.setEndAfter(emojiNode);
+        selection.removeAllRanges();
+        selection.addRange(range);
+
+        // Trigger input event to activate typing indicator
+        messageEditor.dispatchEvent(new Event('input'));
         messageEditor.focus();
     }
 

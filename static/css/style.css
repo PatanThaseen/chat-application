@@ -106,6 +106,14 @@ body {
     background: white;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
     transition: box-shadow 0.2s ease;
+    font-size: 1rem;
+    line-height: 1.5;
+}
+
+#messageEditor:empty:before {
+    content: attr(placeholder);
+    color: #999;
+    pointer-events: none;
 }
 
 #messageEditor:focus {
@@ -140,22 +148,41 @@ body {
 }
 
 /* Emoji picker customization */
-.emoji-mart {
-    font-family: 'Poppins', sans-serif;
-    border-radius: 12px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+emoji-picker {
+    --background: #ffffff;
+    --border-radius: 12px;
+    --category-icon-size: 20px;
+    --font-family: 'Poppins', sans-serif;
+    --font-size: 14px;
+    --shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    max-height: 400px;
+    border: none !important;
 }
 
-.emoji-mart-emoji {
-    cursor: pointer;
-    transition: transform 0.2s ease;
+emoji-picker::part(emoji) {
+    font-size: 1.5em;
+    transition: transform 0.1s ease;
 }
 
-.emoji-mart-emoji:hover {
-    transform: scale(1.1);
+emoji-picker::part(emoji):hover {
+    transform: scale(1.2);
+    background: rgba(0, 132, 255, 0.1);
+    border-radius: 8px;
 }
 
-/* Message actions */
+.emoji-button {
+    position: relative;
+}
+
+#messageEditor img.emoji {
+    height: 1.4em;
+    width: 1.4em;
+    margin: 0 .05em 0 .1em;
+    vertical-align: -0.2em;
+    display: inline-block;
+}
+
+
 .message .actions {
     display: none;
     position: absolute;

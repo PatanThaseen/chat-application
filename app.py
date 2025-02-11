@@ -1,24 +1,28 @@
 from flask import Flask, render_template, request, session, redirect, url_for, jsonify
 from datetime import datetime, timedelta
+from flask_sqlalchemy import SQLAlchemy
+import os
 import logging
 
 # Configure logging
 logging.basicConfig(level=logging.DEBUG)
 
 app = Flask(__name__)
-app.secret_key = "your-secret-key-here"  # In production, use environment variable
+app.secret_key = os.environ.get("FLASK_SECRET_KEY", "your-secret-key-here")
 
-# In-memory storage
-messages = []
-active_users = {}
+# Database configuration
+app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get("DATABASE_URL")
+app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+db = SQLAlchemy(app)
+
+# Import models after db initialization to avoid circular imports
+from models import User, Message
 
 def cleanup_inactive_users():
     """Remove users who haven't been active in the last 5 minutes"""
-    current_time = datetime.now()
-    inactive = [user for user, last_seen in active_users.items() 
-               if (current_time - last_seen) > timedelta(minutes=5)]
-    for user in inactive:
-        del active_users[user]
+    cutoff_time = datetime.utcnow() - timedelta(minutes=5)
+    User.query.filter(User.last_seen < cutoff_time).delete()
+    db.session.commit()
 
 @app.route('/')
 def index():
@@ -31,8 +35,13 @@ def login():
     if request.method == 'POST':
         username = request.form.get('username', '').strip()
         if username:
+            user = User.query.filter_by(username=username).first()
+            if not user:
+                user = User(username=username)
+                db.session.add(user)
+            user.last_seen = datetime.utcnow()
+            db.session.commit()
             session['username'] = username
-            active_users[username] = datetime.now()
             return redirect(url_for('chat'))
         return render_template('login.html', error="Username is required")
     return render_template('login.html')
@@ -41,8 +50,10 @@ def login():
 def logout():
     if 'username' in session:
         username = session['username']
-        if username in active_users:
-            del active_users[username]
+        user = User.query.filter_by(username=username).first()
+        if user:
+            db.session.delete(user)
+            db.session.commit()
         session.pop('username', None)
     return redirect(url_for('login'))
 
@@ -57,22 +68,40 @@ def handle_messages():
     if 'username' not in session:
         return jsonify({'error': 'Not authenticated'}), 401
 
+    user = User.query.filter_by(username=session['username']).first()
+    if not user:
+        return jsonify({'error': 'User not found'}), 404
+
     if request.method == 'POST':
         content = request.json.get('message', '').strip()
         if content:
-            messages.append({
-                'username': session['username'],
-                'content': content,
-                'timestamp': datetime.now().strftime('%H:%M:%S')
-            })
+            message = Message(content=content, user_id=user.id)
+            db.session.add(message)
+            user.last_seen = datetime.utcnow()
+            db.session.commit()
             return jsonify({'status': 'success'})
         return jsonify({'error': 'Empty message'}), 400
 
     # Update user's last seen time
-    active_users[session['username']] = datetime.now()
+    user.last_seen = datetime.utcnow()
+    db.session.commit()
     cleanup_inactive_users()
-    
+
+    # Get recent messages and active users
+    messages = Message.query.order_by(Message.timestamp.desc()).limit(50).all()
+    active_users = User.query.filter(
+        User.last_seen >= datetime.utcnow() - timedelta(minutes=5)
+    ).all()
+
     return jsonify({
-        'messages': messages[-50:],  # Return last 50 messages
-        'active_users': list(active_users.keys())
+        'messages': [{
+            'username': msg.author.username,
+            'content': msg.content,
+            'timestamp': msg.timestamp.strftime('%H:%M:%S')
+        } for msg in reversed(messages)],
+        'active_users': [user.username for user in active_users]
     })
+
+# Create tables
+with app.app_context():
+    db.create_all()

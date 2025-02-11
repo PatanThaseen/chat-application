@@ -1,0 +1,40 @@
+.chat-messages {
+    height: 0; /* Flex will handle the actual height */
+    background-color: #f8f9fa;
+}
+
+.message {
+    margin-bottom: 1rem;
+    padding: 0.5rem 1rem;
+    border-radius: 0.5rem;
+    max-width: 80%;
+}
+
+.message.own {
+    background-color: #007bff;
+    color: white;
+    margin-left: auto;
+}
+
+.message.other {
+    background-color: #e9ecef;
+}
+
+.message .username {
+    font-weight: bold;
+    font-size: 0.875rem;
+}
+
+.message .timestamp {
+    font-size: 0.75rem;
+    opacity: 0.7;
+}
+
+.active-user {
+    padding: 0.25rem 0;
+}
+
+.active-user i {
+    color: #28a745;
+    margin-right: 0.5rem;
+}

@@ -9,6 +9,7 @@ from models import User, Message
 
 # Configure logging
 logging.basicConfig(level=logging.DEBUG)
+logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
 app.secret_key = os.environ.get("FLASK_SECRET_KEY", "your-secret-key-here")
@@ -16,6 +17,11 @@ app.secret_key = os.environ.get("FLASK_SECRET_KEY", "your-secret-key-here")
 # Database configuration
 app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get("DATABASE_URL")
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+app.config["SQLALCHEMY_ENGINE_OPTIONS"] = {
+    "pool_pre_ping": True,
+    "pool_recycle": 300,
+}
+
 db.init_app(app)
 
 # Login manager configuration
@@ -46,12 +52,18 @@ def register():
 
     form = RegistrationForm()
     if form.validate_on_submit():
-        user = User(username=form.username.data, email=form.email.data)
-        user.set_password(form.password.data)
-        db.session.add(user)
-        db.session.commit()
-        flash('Registration successful! Please login.', 'success')
-        return redirect(url_for('login'))
+        try:
+            user = User(username=form.username.data, email=form.email.data)
+            user.set_password(form.password.data)
+            db.session.add(user)
+            db.session.commit()
+            logger.info(f"Successfully registered user: {user.username}")
+            flash('Registration successful! Please login.', 'success')
+            return redirect(url_for('login'))
+        except Exception as e:
+            db.session.rollback()
+            logger.error(f"Error during registration: {str(e)}")
+            flash('An error occurred during registration. Please try again.', 'error')
     return render_template('register.html', form=form)
 
 @app.route('/login', methods=['GET', 'POST'])
@@ -61,21 +73,28 @@ def login():
 
     form = LoginForm()
     if form.validate_on_submit():
-        user = User.query.filter_by(email=form.email.data).first()
-        if user and user.check_password(form.password.data):
-            login_user(user)
-            user.last_seen = datetime.utcnow()
-            db.session.commit()
-            return redirect(url_for('chat'))
-        flash('Invalid email or password', 'error')
+        try:
+            user = User.query.filter_by(email=form.email.data).first()
+            if user and user.check_password(form.password.data):
+                login_user(user)
+                user.last_seen = datetime.utcnow()
+                db.session.commit()
+                logger.info(f"User logged in: {user.username}")
+                return redirect(url_for('chat'))
+            flash('Invalid email or password', 'error')
+        except Exception as e:
+            logger.error(f"Error during login: {str(e)}")
+            flash('An error occurred during login. Please try again.', 'error')
     return render_template('login.html', form=form)
 
 @app.route('/logout')
 @login_required
 def logout():
+    username = current_user.username
     current_user.last_seen = None
     db.session.commit()
     logout_user()
+    logger.info(f"User logged out: {username}")
     return redirect(url_for('login'))
 
 @app.route('/chat')
@@ -89,32 +108,41 @@ def handle_messages():
     if request.method == 'POST':
         content = request.json.get('message', '').strip()
         if content:
-            message = Message(content=content, user_id=current_user.id)
-            db.session.add(message)
-            current_user.last_seen = datetime.utcnow()
-            db.session.commit()
-            return jsonify({'status': 'success'})
+            try:
+                message = Message(content=content, user_id=current_user.id)
+                db.session.add(message)
+                current_user.last_seen = datetime.utcnow()
+                db.session.commit()
+                return jsonify({'status': 'success'})
+            except Exception as e:
+                db.session.rollback()
+                logger.error(f"Error saving message: {str(e)}")
+                return jsonify({'error': 'Failed to save message'}), 500
         return jsonify({'error': 'Empty message'}), 400
 
-    # Update user's last seen time
-    current_user.last_seen = datetime.utcnow()
-    db.session.commit()
-    cleanup_inactive_users()
+    try:
+        # Update user's last seen time
+        current_user.last_seen = datetime.utcnow()
+        db.session.commit()
+        cleanup_inactive_users()
 
-    # Get recent messages and active users
-    messages = Message.query.order_by(Message.timestamp.desc()).limit(50).all()
-    active_users = User.query.filter(
-        User.last_seen.isnot(None)
-    ).all()
+        # Get recent messages and active users
+        messages = Message.query.order_by(Message.timestamp.desc()).limit(50).all()
+        active_users = User.query.filter(
+            User.last_seen.isnot(None)
+        ).all()
 
-    return jsonify({
-        'messages': [{
-            'username': msg.author.username,
-            'content': msg.content,
-            'timestamp': msg.timestamp.strftime('%H:%M:%S')
-        } for msg in reversed(messages)],
-        'active_users': [user.username for user in active_users]
-    })
+        return jsonify({
+            'messages': [{
+                'username': msg.author.username,
+                'content': msg.content,
+                'timestamp': msg.timestamp.strftime('%H:%M:%S')
+            } for msg in reversed(messages)],
+            'active_users': [user.username for user in active_users]
+        })
+    except Exception as e:
+        logger.error(f"Error fetching messages: {str(e)}")
+        return jsonify({'error': 'Failed to fetch messages'}), 500
 
 # Create tables
 with app.app_context():

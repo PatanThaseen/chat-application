@@ -1,102 +1,228 @@
+/* Global styles */
+body {
+    font-family: 'Poppins', sans-serif;
+    background: #f0f2f5;
+    color: #1a1a1a;
+}
+
+.app-container {
+    min-height: 100vh;
+}
+
+/* Chat container styles */
 .chat-messages {
-    height: 0; /* Flex will handle the actual height */
-    background-color: #f8f9fa;
+    height: 0;
+    background-color: #ffffff;
+    border-radius: 12px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    padding: 1rem;
 }
 
 .message {
     margin-bottom: 1rem;
-    padding: 0.5rem 1rem;
-    border-radius: 0.5rem;
+    padding: 0.75rem 1rem;
+    border-radius: 1rem;
     max-width: 80%;
     word-break: break-word;
+    position: relative;
+    animation: fadeIn 0.3s ease-in;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
 }
 
 .message.own {
-    background-color: #007bff;
+    background-color: #0084ff;
     color: white;
     margin-left: auto;
+    border-bottom-right-radius: 4px;
 }
 
 .message.other {
-    background-color: #e9ecef;
+    background-color: #f0f2f5;
+    border-bottom-left-radius: 4px;
 }
 
 .message .username {
-    font-weight: bold;
+    font-weight: 500;
     font-size: 0.875rem;
+    margin-bottom: 0.25rem;
 }
 
 .message .timestamp {
     font-size: 0.75rem;
     opacity: 0.7;
+    margin-top: 0.25rem;
 }
 
 .message .content {
     margin-top: 0.25rem;
+    line-height: 1.4;
 }
 
 .message .content img.emoji {
-    height: 1.2em;
-    width: 1.2em;
+    height: 1.4em;
+    width: 1.4em;
     margin: 0 .05em 0 .1em;
-    vertical-align: -0.1em;
+    vertical-align: -0.2em;
+}
+
+/* Active users sidebar */
+.active-users-sidebar {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    padding: 1.5rem;
 }
 
 .active-user {
-    padding: 0.25rem 0;
+    padding: 0.5rem 0;
+    display: flex;
+    align-items: center;
+    transition: all 0.2s ease;
+}
+
+.active-user:hover {
+    background-color: #f8f9fa;
+    border-radius: 8px;
+    padding-left: 0.5rem;
 }
 
 .active-user i {
-    color: #28a745;
-    margin-right: 0.5rem;
+    color: #00d471;
+    margin-right: 0.75rem;
+    font-size: 0.75rem;
 }
 
+/* Message editor */
 #messageEditor {
     min-height: 100px;
     max-height: 200px;
     overflow-y: auto;
+    border-radius: 12px;
+    padding: 0.75rem;
+    background: white;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    transition: box-shadow 0.2s ease;
+}
+
+#messageEditor:focus {
+    box-shadow: 0 0 0 2px rgba(0, 132, 255, 0.2);
+    outline: none;
 }
 
 .editor-toolbar {
     gap: 0.5rem;
     display: flex;
+    padding: 0.5rem 0;
 }
 
 .editor-toolbar button {
-    padding: 0.25rem 0.5rem;
+    padding: 0.5rem;
+    border-radius: 8px;
+    transition: all 0.2s ease;
+}
+
+.editor-toolbar button:hover {
+    background-color: #f0f2f5;
+    color: #0084ff;
 }
 
 .typing-indicator {
     font-style: italic;
+    color: #666;
+    padding: 0.5rem 1rem;
+    background: rgba(255, 255, 255, 0.8);
+    border-radius: 12px;
+    margin-bottom: 0.5rem;
 }
 
 /* Emoji picker customization */
 .emoji-mart {
-    font-size: 14px;
+    font-family: 'Poppins', sans-serif;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
 .emoji-mart-emoji {
     cursor: pointer;
+    transition: transform 0.2s ease;
 }
 
+.emoji-mart-emoji:hover {
+    transform: scale(1.1);
+}
+
+/* Message actions */
 .message .actions {
     display: none;
-    float: right;
+    position: absolute;
+    right: 0.5rem;
+    top: 0.5rem;
+    background: rgba(255, 255, 255, 0.9);
+    border-radius: 8px;
+    padding: 0.25rem;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .message:hover .actions {
-    display: block;
+    display: flex;
+    gap: 0.25rem;
 }
 
 .message .actions button {
     background: none;
     border: none;
-    color: inherit;
+    color: #666;
     opacity: 0.7;
     cursor: pointer;
-    padding: 0 0.25rem;
+    padding: 0.25rem;
+    border-radius: 4px;
+    transition: all 0.2s ease;
 }
 
 .message .actions button:hover {
     opacity: 1;
+    background-color: rgba(0, 0, 0, 0.05);
+    color: #0084ff;
+}
+
+/* Navbar styling */
+.navbar {
+    background-color: white !important;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.navbar-brand {
+    font-weight: 600;
+    color: #0084ff !important;
+    font-size: 1.5rem;
+}
+
+/* Form styling */
+.form-control {
+    border-radius: 8px;
+    border: 1px solid #e4e6eb;
+    padding: 0.75rem 1rem;
+}
+
+.form-control:focus {
+    border-color: #0084ff;
+    box-shadow: 0 0 0 2px rgba(0, 132, 255, 0.2);
+}
+
+.btn-primary {
+    background-color: #0084ff;
+    border: none;
+    border-radius: 8px;
+    padding: 0.75rem 1.5rem;
+    font-weight: 500;
+    transition: all 0.2s ease;
+}
+
+.btn-primary:hover {
+    background-color: #0073e6;
+    transform: translateY(-1px);
 }

@@ -2,43 +2,48 @@
 
 {% block content %}
 <div class="container-fluid vh-100 d-flex flex-column">
-    <nav class="navbar navbar-expand-lg navbar-light bg-light">
+    <nav class="navbar navbar-expand-lg navbar-light">
         <div class="container-fluid">
-            <span class="navbar-brand">Flask Chat</span>
-            <div class="d-flex">
+            <span class="navbar-brand">
+                <i class="fa fa-comments-o"></i> ChatterBox
+            </span>
+            <div class="d-flex align-items-center">
                 <span class="navbar-text me-3">
-                    Welcome, {{ username }}!
+                    <i class="fa fa-user-circle-o"></i> {{ username }}
                 </span>
-                <a href="{{ url_for('logout') }}" class="btn btn-outline-danger btn-sm">Logout</a>
+                <a href="{{ url_for('logout') }}" class="btn btn-outline-danger btn-sm">
+                    <i class="fa fa-sign-out"></i> Logout
+                </a>
             </div>
         </div>
     </nav>
 
-    <div class="row flex-grow-1 overflow-hidden">
+    <div class="row flex-grow-1 overflow-hidden p-3">
         <div class="col-md-9 h-100 d-flex flex-column">
-            <div class="chat-messages flex-grow-1 overflow-auto p-3" id="messageContainer">
-                <div class="text-center text-muted" id="loadingMessages">
+            <div class="chat-messages flex-grow-1 overflow-auto" id="messageContainer">
+                <div class="text-center text-muted py-4" id="loadingMessages">
                     <i class="fa fa-spinner fa-spin"></i> Loading messages...
                 </div>
             </div>
-            <div class="typing-indicator ms-3 mb-2 text-muted" id="typingIndicator" style="display: none;">
-                Someone is typing...
+            <div class="typing-indicator ms-3" id="typingIndicator" style="display: none;">
+                <i class="fa fa-pencil"></i> <span class="typing-text"></span>
             </div>
-            <div class="p-3 border-top">
+            <div class="message-input-container p-3">
                 <form id="messageForm" class="d-flex flex-column">
                     <div class="mb-2">
-                        <div id="messageEditor" class="form-control" contenteditable="true"></div>
-                        <div class="editor-toolbar mt-2">
-                            <button type="button" class="btn btn-sm btn-outline-secondary" onclick="formatText('bold')">
+                        <div id="messageEditor" class="form-control" contenteditable="true" 
+                             placeholder="Type your message..."></div>
+                        <div class="editor-toolbar">
+                            <button type="button" class="btn btn-sm btn-outline-secondary" onclick="formatText('bold')" title="Bold">
                                 <i class="fa fa-bold"></i>
                             </button>
-                            <button type="button" class="btn btn-sm btn-outline-secondary" onclick="formatText('italic')">
+                            <button type="button" class="btn btn-sm btn-outline-secondary" onclick="formatText('italic')" title="Italic">
                                 <i class="fa fa-italic"></i>
                             </button>
-                            <button type="button" class="btn btn-sm btn-outline-secondary" onclick="formatText('underline')">
+                            <button type="button" class="btn btn-sm btn-outline-secondary" onclick="formatText('underline')" title="Underline">
                                 <i class="fa fa-underline"></i>
                             </button>
-                            <button type="button" class="btn btn-sm btn-outline-secondary" id="emojiButton">
+                            <button type="button" class="btn btn-sm btn-outline-secondary" id="emojiButton" title="Insert Emoji">
                                 <i class="fa fa-smile-o"></i>
                             </button>
                         </div>
@@ -51,9 +56,11 @@
                 </form>
             </div>
         </div>
-        <div class="col-md-3 border-start h-100">
-            <div class="p-3">
-                <h5>Active Users</h5>
+        <div class="col-md-3 h-100">
+            <div class="active-users-sidebar h-100">
+                <h5 class="mb-4">
+                    <i class="fa fa-users"></i> Online Users
+                </h5>
                 <ul class="list-unstyled" id="activeUsers">
                     <li class="text-muted">
                         <i class="fa fa-spinner fa-spin"></i> Loading users...
@@ -69,20 +76,19 @@
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title">Select Emoji</h5>
+                <h5 class="modal-title"><i class="fa fa-smile-o"></i> Insert Emoji</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body" id="emojiContainer">
-                <!-- Emojis will be populated here -->
+                <div id="emojiPicker"></div>
             </div>
         </div>
     </div>
 </div>
+
 {% endblock %}
 
 {% block scripts %}
-<!-- Include Emoji Mart -->
-<script src="https://cdn.jsdelivr.net/npm/emoji-mart@latest/dist/browser.js"></script>
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/emoji-mart@latest/css/emoji-mart.css">
+<script src="https://cdn.jsdelivr.net/npm/@joeattardi/emoji-button@latest/dist/index.min.js"></script>
 <script src="{{ url_for('static', filename='js/chat.js') }}"></script>
 {% endblock %}

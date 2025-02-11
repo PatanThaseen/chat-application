@@ -187,8 +187,8 @@ document.addEventListener('DOMContentLoaded', function() {
     messageForm.addEventListener('submit', async function(e) {
         e.preventDefault();
 
-        const content = messageEditor.innerHTML.trim();
-        if (!content) return;
+        const content = messageEditor.innerHTML;
+        if (!content || content === '<br>') return;  // Allow content with just emojis
 
         const submitButton = messageForm.querySelector('button[type="submit"]');
         submitButton.disabled = true;

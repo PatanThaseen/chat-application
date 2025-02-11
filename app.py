@@ -155,10 +155,12 @@ def handle_messages():
                 logger.error("No data received in message POST request")
                 return jsonify({"error": "No data provided"}), 400
 
-            content = data.get('message', '').strip()
+            content = data.get('message', '')
             is_formatted = data.get('formatted', False)
 
-            if not content:
+            # Remove any empty HTML tags but keep emojis and actual content
+            cleaned_content = content.replace('<br>', '').replace('<div>', '').replace('</div>', '')
+            if not cleaned_content:
                 logger.error("Empty message content received")
                 return jsonify({"error": "Empty message"}), 400
 

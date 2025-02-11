@@ -43,7 +43,7 @@
                             <button type="button" class="btn btn-sm btn-outline-secondary" onclick="formatText('underline')" title="Underline">
                                 <i class="fa fa-underline"></i>
                             </button>
-                            <button type="button" class="btn btn-sm btn-outline-secondary" id="emojiButton" title="Insert Emoji">
+                            <button type="button" class="btn btn-sm btn-outline-secondary emoji-button" title="Insert Emoji">
                                 <i class="fa fa-smile-o"></i>
                             </button>
                         </div>
@@ -71,24 +71,9 @@
     </div>
 </div>
 
-<!-- Emoji Picker Modal -->
-<div class="modal fade" id="emojiModal" tabindex="-1">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title"><i class="fa fa-smile-o"></i> Insert Emoji</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body" id="emojiContainer">
-                <div id="emojiPicker"></div>
-            </div>
-        </div>
-    </div>
-</div>
-
 {% endblock %}
 
 {% block scripts %}
-<script src="https://cdn.jsdelivr.net/npm/@joeattardi/emoji-button@latest/dist/index.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/emoji-picker-element@^1/index.js" type="module"></script>
 <script src="{{ url_for('static', filename='js/chat.js') }}"></script>
 {% endblock %}

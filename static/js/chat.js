@@ -4,34 +4,33 @@ document.addEventListener('DOMContentLoaded', function() {
     const messageEditor = document.getElementById('messageEditor');
     const activeUsers = document.getElementById('activeUsers');
     const typingIndicator = document.getElementById('typingIndicator');
-    const emojiButton = document.getElementById('emojiButton');
     const currentUsername = document.querySelector('.navbar-text').textContent.trim();
 
     let lastTypingSignal = 0;
 
     // Initialize emoji picker
-    const picker = new EmojiButton({
-        position: 'top-start',
-        theme: 'light',
-        autoHide: false,
-        emojisPerRow: 8,
-        rows: 8,
-        showPreview: true,
-        showSearch: true,
-        showRecents: true,
-        styleProperties: {
-            '--emoji-size': '1.5rem',
-            '--emoji-padding': '0.5rem',
-            '--category-button-size': '2rem'
+    const picker = document.createElement('emoji-picker');
+    document.body.appendChild(picker);
+
+    document.querySelector('.emoji-button').addEventListener('click', () => {
+        picker.style.display = picker.style.display === 'none' ? 'block' : 'none';
+        picker.style.position = 'fixed';
+        picker.style.zIndex = '1000';
+        const buttonRect = document.querySelector('.emoji-button').getBoundingClientRect();
+        picker.style.top = `${buttonRect.bottom + 5}px`;
+        picker.style.left = `${buttonRect.left}px`;
+    });
+
+    // Hide picker when clicking outside
+    document.addEventListener('click', (e) => {
+        if (!e.target.closest('emoji-picker') && !e.target.closest('.emoji-button')) {
+            picker.style.display = 'none';
         }
     });
 
-    picker.on('emoji', emoji => {
-        insertTextAtCursor(emoji);
-    });
-
-    emojiButton.addEventListener('click', () => {
-        picker.togglePicker(emojiButton);
+    picker.addEventListener('emoji-click', event => {
+        insertTextAtCursor(event.detail.unicode);
+        picker.style.display = 'none';
     });
 
     function insertTextAtCursor(text) {
@@ -48,11 +47,12 @@ document.addEventListener('DOMContentLoaded', function() {
         messageEditor.focus();
     }
 
-    window.formatText = formatText; // Make it globally available
+    window.formatText = formatText;
 
     function createMessageElement(message) {
         const div = document.createElement('div');
         div.className = `message ${message.username === currentUsername ? 'own' : 'other'}`;
+        div.dataset.id = message.id;
 
         const actions = message.username === currentUsername ? `
             <div class="actions">
@@ -128,6 +128,7 @@ document.addEventListener('DOMContentLoaded', function() {
             if (!response.ok) throw new Error('Network response was not ok');
 
             const data = await response.json();
+            if (!data.messages) throw new Error('Invalid response format');
 
             // Update messages
             messageContainer.innerHTML = '';
@@ -137,12 +138,19 @@ document.addEventListener('DOMContentLoaded', function() {
             messageContainer.scrollTop = messageContainer.scrollHeight;
 
             // Update active users
-            updateActiveUsers(data.active_users);
+            if (data.active_users) {
+                updateActiveUsers(data.active_users);
+            }
 
             // Check typing status
             await checkTypingStatus();
         } catch (error) {
             console.error('Error fetching updates:', error);
+            messageContainer.innerHTML = `
+                <div class="text-center text-danger py-4">
+                    <i class="fa fa-exclamation-circle"></i> Failed to load messages. Please refresh the page.
+                </div>
+            `;
         }
     }
 
@@ -151,6 +159,9 @@ document.addEventListener('DOMContentLoaded', function() {
 
         const content = messageEditor.innerHTML.trim();
         if (!content) return;
+
+        const submitButton = messageForm.querySelector('button[type="submit"]');
+        submitButton.disabled = true;
 
         try {
             const response = await fetch('/api/messages', {
@@ -164,21 +175,28 @@ document.addEventListener('DOMContentLoaded', function() {
                 }),
             });
 
-            if (!response.ok) throw new Error('Failed to send message');
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.error || 'Failed to send message');
+            }
 
             messageEditor.innerHTML = '';
             await fetchUpdates();
         } catch (error) {
             console.error('Error sending message:', error);
-            alert('Failed to send message. Please try again.');
+            alert(error.message || 'Failed to send message. Please try again.');
+        } finally {
+            submitButton.disabled = false;
         }
     });
 
     window.editMessage = async function(messageId) {
         const messageElement = document.querySelector(`.message[data-id="${messageId}"]`);
-        const content = messageElement.querySelector('.content').innerHTML;
+        if (!messageElement) return;
 
+        const content = messageElement.querySelector('.content').innerHTML;
         const newContent = prompt('Edit message:', content);
+
         if (newContent && newContent !== content) {
             try {
                 const response = await fetch(`/api/messages/${messageId}`, {

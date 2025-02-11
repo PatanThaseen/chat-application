@@ -149,10 +149,19 @@ def handle_message(message_id):
 @login_required
 def handle_messages():
     if request.method == 'POST':
-        content = request.json.get('message', '').strip()
-        is_formatted = request.json.get('formatted', False)
+        try:
+            data = request.get_json()
+            if not data:
+                logger.error("No data received in message POST request")
+                return jsonify({"error": "No data provided"}), 400
 
-        if content:
+            content = data.get('message', '').strip()
+            is_formatted = data.get('formatted', False)
+
+            if not content:
+                logger.error("Empty message content received")
+                return jsonify({"error": "Empty message"}), 400
+
             try:
                 message = Message(
                     content=content,
@@ -162,12 +171,15 @@ def handle_messages():
                 db.session.add(message)
                 current_user.last_seen = datetime.utcnow()
                 db.session.commit()
+                logger.info(f"Message saved successfully for user {current_user.username}")
                 return jsonify({'status': 'success'})
             except Exception as e:
                 db.session.rollback()
                 logger.error(f"Error saving message: {str(e)}")
                 return jsonify({'error': 'Failed to save message'}), 500
-        return jsonify({'error': 'Empty message'}), 400
+        except Exception as e:
+            logger.error(f"Error processing message request: {str(e)}")
+            return jsonify({'error': 'Invalid request'}), 400
 
     try:
         # Update user's last seen time
